@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.rest"
-version = "1.0.0"
+version = "1.0.3"
 
 repositories {
     mavenCentral()
@@ -36,7 +36,36 @@ java {
 publishing {
     publications {
         create<MavenPublication>("maven") {
+            groupId = project.group.toString()
+            artifactId = project.name
+            version = project.version.toString()
+
             from(components["java"])
+
+            versionMapping {
+                usage("java-api") {
+                    fromResolutionOf("runtimeClasspath")
+                }
+                usage("java-runtime") {
+                    fromResolutionResult()
+                }
+            }
+
+            pom {
+                name.set(project.name)
+                description.set("Rest Response Form Library")
+
+                properties.set(mapOf(
+                    "java.version" to "21"
+                ))
+
+                developers {
+                    developer {
+                        id.set("s12171934")
+                        name.set("s12171934")
+                    }
+                }
+            }
         }
     }
 }

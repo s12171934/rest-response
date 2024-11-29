@@ -51,7 +51,6 @@ public class RestResponseFactory<T> {
     this.responseCode = responseCode;
   }
 
-
   private ResponseEntity<RestResponse<T>> createResponseEntity() {
 
     return new ResponseEntity<>(restResponse, this.headers, this.responseCode.getHttpStatus());
