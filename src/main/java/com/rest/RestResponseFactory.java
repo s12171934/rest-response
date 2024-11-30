@@ -1,9 +1,8 @@
 package com.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rest.config.AppProperties;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,10 +12,10 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.util.Objects;
-import java.util.Properties;
 
 public class RestResponseFactory<T> {
 
+  private final String REST_API_VERSION = AppProperties.restApiVersion();
   private final RestResponseCode responseCode;
   private HttpHeaders headers;
   private RestResponse<T> restResponse;
@@ -35,7 +34,7 @@ public class RestResponseFactory<T> {
         new RestResponse.MetaData(
             LocalDateTime.now(),
             ServletUriComponentsBuilder.fromCurrentRequest().toUriString(),
-            getApiVersion()
+            REST_API_VERSION
         )
     );
   }
@@ -54,19 +53,6 @@ public class RestResponseFactory<T> {
   private ResponseEntity<RestResponse<T>> createResponseEntity() {
 
     return new ResponseEntity<>(restResponse, this.headers, this.responseCode.getHttpStatus());
-  }
-
-  private String getApiVersion() {
-
-    try {
-      YamlPropertiesFactoryBean yamlPropertiesFactoryBean = new YamlPropertiesFactoryBean();
-      yamlPropertiesFactoryBean.setResources(new ClassPathResource("application.yaml"));
-      Properties properties = yamlPropertiesFactoryBean.getObject();
-      return properties.getProperty("api.version", "no_version");
-    }
-    catch (Exception e) {
-      return "no_version";
-    }
   }
 
   private void setResponse(HttpServletResponse response) {
