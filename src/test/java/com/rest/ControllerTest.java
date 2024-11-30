@@ -1,11 +1,15 @@
 package com.rest;
 
+import com.rest.config.AppProperties;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -19,7 +23,10 @@ import java.util.List;
 
 import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
+@SpringBootTest(
+    classes = TestConfig.class,
+    properties = "spring.config.name=application-test"
+)
 public class ControllerTest {
 
   @InjectMocks
@@ -28,9 +35,8 @@ public class ControllerTest {
   @Mock
   private TestService testService;
 
-  @Test
-  void getRestResponseTest() {
-
+  @BeforeEach
+  void setUp() {
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setRequestURI("/api/test");
     request.setServerPort(8080);
@@ -38,6 +44,16 @@ public class ControllerTest {
     request.setServerName("localhost");
 
     RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+  }
+
+  @AfterEach
+  void tearDown() {
+    RequestContextHolder.resetRequestAttributes();
+  }
+
+  @Test
+  void getRestResponseTest() {
+
     when(testService.getTest()).thenReturn(List.of(new String[]{"test1", "test2"}));
 
     ResponseEntity<RestResponse<List<String>>> result = testController.getData();
@@ -71,3 +87,7 @@ class TestService {
     return List.of(new String[]{"test1", "test2"});
   }
 }
+
+@Configuration
+@EnableConfigurationProperties(AppProperties.class)
+class TestConfig {}
