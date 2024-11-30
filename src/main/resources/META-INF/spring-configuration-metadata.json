@@ -1,0 +1,19 @@
+{
+  "groups": [
+    {
+      "name": "rest.response",
+      "type": "com.example.config.AppProperties",
+      "sourceType": "com.example.config.AppProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "rest.response.version",
+      "type": "java.lang.String",
+      "description": "REST API 버전",
+      "sourceType": "com.example.config.AppProperties",
+      "defaultValue": "NO_VERSION"
+    }
+  ],
+  "hints": []
+}
