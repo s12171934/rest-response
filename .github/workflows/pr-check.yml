@@ -7,7 +7,7 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  verify:
+  pull_request_check:
     runs-on: ubuntu-latest
     
     steps:
