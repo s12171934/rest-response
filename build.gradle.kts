@@ -71,6 +71,10 @@ publishing {
     }
 }
 
+tasks.withType<Javadoc> {
+    (options as StandardJavadocDocletOptions).doclet("none")
+}
+
 tasks.test {
     useJUnitPlatform()
 }
