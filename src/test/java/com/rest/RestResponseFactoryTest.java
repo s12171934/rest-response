@@ -1,21 +1,17 @@
 package com.rest;
 
-import com.rest.config.AppProperties;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rest.code.TestResponseCode;
+import com.rest.config.TestConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -31,9 +27,16 @@ import static org.junit.jupiter.api.Assertions.*;
 public class RestResponseFactoryTest {
 
   private MockHttpServletResponse response;
+  private HttpHeaders testHeaders;
+  private Pagination pagination;
 
   @BeforeEach
   void setUp() {
+    testHeaders = new HttpHeaders();
+    testHeaders.add("Custom-Header", "test-value");
+
+    pagination = new Pagination(1,10,100);
+
     MockHttpServletRequest request = new MockHttpServletRequest();
     request.setRequestURI("/api/test");
     request.setServerPort(8080);
@@ -52,14 +55,12 @@ public class RestResponseFactoryTest {
   @Test
   void createFullResponseEntityTest() {
     // Given
-    HttpHeaders headers = new HttpHeaders();
-    headers.add("Custom-Header", "test-value");
-    List<String> testData = List.of("test1", "test2");
+    String testData = "test-data";
 
     // When
-    ResponseEntity<RestResponse<List<String>>> result = RestResponseFactory.createFullResponseEntity(
+    ResponseEntity<RestResponse<String>> result = RestResponseFactory.createFullResponseEntity(
         HttpStatus.OK,
-        headers,
+        testHeaders,
         testData
     );
 
@@ -71,16 +72,37 @@ public class RestResponseFactoryTest {
   }
 
   @Test
-  void createFullResponseEntityWithPaginationTest() {
+  void createFullResponseEntityWithListAndPaginationTest() {
     // Given
-    HttpHeaders headers = new HttpHeaders();
     List<String> testData = List.of("test1", "test2");
-    Pagination pagination = new Pagination(1,10,100);
 
     // When
     ResponseEntity<RestResponse<List<String>>> result = RestResponseFactory.createFullResponseEntity(
         HttpStatus.OK,
-        headers,
+        testHeaders,
+        testData,
+        pagination
+    );
+
+    // Then
+    assertNotNull(result);
+    assertEquals(HttpStatus.OK, result.getStatusCode());
+    assertEquals(testData, result.getBody().result());
+    assertNotNull(result.getBody().metaData().pagination());
+    assertEquals(1, result.getBody().metaData().pagination().currentPage());
+    assertEquals(10, result.getBody().metaData().pagination().totalPages());
+    assertEquals(100, result.getBody().metaData().pagination().totalItems());
+  }
+
+  @Test
+  void createFullResponseEntityWithArrayAndPaginationTest() {
+    // Given
+    String[] testData = {"test1", "test2", "test3"};
+
+    // When
+    ResponseEntity<RestResponse<String[]>> result = RestResponseFactory.createFullResponseEntity(
+        HttpStatus.OK,
+        testHeaders,
         testData,
         pagination
     );
@@ -109,10 +131,10 @@ public class RestResponseFactoryTest {
   @Test
   void createResultResponseEntityTest() {
     // Given
-    List<String> testData = List.of("test1", "test2");
+    String testData = "test-data";
 
     // When
-    ResponseEntity<RestResponse<List<String>>> result = RestResponseFactory.createResultResponseEntity(
+    ResponseEntity<RestResponse<String>> result = RestResponseFactory.createResultResponseEntity(
         HttpStatus.OK,
         testData
     );
@@ -124,39 +146,69 @@ public class RestResponseFactoryTest {
   }
 
   @Test
+  void createHeadersResponseEntityTest() {
+    // When
+    ResponseEntity<RestResponse<Void>> result = RestResponseFactory.createHeaderResponseEntity(
+        HttpStatus.OK,
+        testHeaders
+    );
+
+    // Then
+    assertNotNull(result);
+    assertEquals(HttpStatus.OK, result.getStatusCode());
+    assertEquals("test-value", result.getHeaders().getFirst("Custom-Header"));
+  }
+
+  @Test
+  void createFullResponseEntityWithCustomResponseCodeTest() {
+    // Given
+    String testData = "test-data";
+
+    //When
+    ResponseEntity<RestResponse<String>> result = RestResponseFactory.createFullResponseEntity(
+        TestResponseCode.TEST_RESPONSE_CODE,
+        testHeaders,
+        testData
+    );
+
+    //Then
+    assertNotNull(result);
+    assertEquals(HttpStatus.OK, result.getStatusCode());
+    assertEquals(20000, result.getBody().status().code());
+    assertEquals("TEST_RESPONSE_CODE", result.getBody().status().message());
+    assertEquals("test-value", result.getHeaders().getFirst("Custom-Header"));
+    assertEquals(testData, result.getBody().result());
+  }
+
+  @Test
   void setFullResponseTest() throws IOException {
     // Given
-    HttpHeaders headers = new HttpHeaders();
-    headers.add("Custom-Header", "test-value");
-    List<String> testData = List.of("test1", "test2");
+    String testData = "test-data";
 
     // When
     RestResponseFactory.setFullResponse(
         response,
         HttpStatus.OK,
-        headers,
+        testHeaders,
         testData
     );
 
     // Then
     assertEquals(HttpStatus.OK.value(), response.getStatus());
     assertEquals("test-value", response.getHeader("Custom-Header"));
-    assertTrue(response.getContentAsString().contains("test1"));
-    assertTrue(response.getContentAsString().contains("test2"));
+    assertTrue(response.getContentAsString().contains("test-data"));
   }
 
   @Test
   void setFullResponseWithPaginationTest() throws IOException {
     // Given
-    HttpHeaders headers = new HttpHeaders();
     List<String> testData = List.of("test1", "test2");
-    Pagination pagination = new Pagination(1,10,100);
 
     // When
     RestResponseFactory.setFullResponse(
         response,
         HttpStatus.OK,
-        headers,
+        testHeaders,
         testData,
         pagination
     );
@@ -169,34 +221,24 @@ public class RestResponseFactoryTest {
     assertTrue(response.getContentAsString().contains("\"totalPages\":10"));
     assertTrue(response.getContentAsString().contains("\"totalItems\":100"));
   }
-}
 
-@RestController
-class TestController {
+  @Test
+  void setFullResponseWithCustomResponseCodeTest() throws IOException {
+    // Given
+    String testData = "test-data";
 
-  private final TestService testService;
+    //When
+    RestResponseFactory.setFullResponse(
+        response,
+        TestResponseCode.TEST_RESPONSE_CODE,
+        testHeaders,
+        testData
+    );
 
-  @Autowired
-  public TestController(TestService testService) {
-
-    this.testService = testService;
-  }
-
-  @GetMapping("/api/test")
-  public ResponseEntity<RestResponse<List<String>>> getData() {
-
-    return RestResponseFactory.createResultResponseEntity(HttpStatus.OK, testService.getTest());
-  }
-}
-
-@Service
-class TestService {
-
-  public List<String> getTest() {
-    return List.of(new String[]{"test1", "test2"});
+    //Then
+    assertEquals(HttpStatus.OK.value(), response.getStatus());
+    assertTrue(response.getContentAsString().contains("test-data"));
+    assertTrue(response.getContentAsString().contains("\"code\":20000"));
+    assertTrue(response.getContentAsString().contains("\"message\":\"TEST_RESPONSE_CODE\""));
   }
 }
-
-@Configuration
-@EnableConfigurationProperties(AppProperties.class)
-class TestConfig {}
