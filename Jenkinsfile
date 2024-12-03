@@ -8,7 +8,7 @@ pipeline {
         REPO_NAME = 's12171934/rest-response'
         NOTIFICATION_EMAIL = 'ssong9520@kakao.com'
         GITHUB_API_URL = "https://api.github.com/repos/${REPO_NAME}"
-        JITPACK_API_URL = "https://jitpack.io/api/builds/${REPO_NAME}"
+        JITPACK_API_URL = "https://jitpack.io/api/builds/com.github.${REPO_NAME}"
     }
 
     tools {
