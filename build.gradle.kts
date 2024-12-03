@@ -71,8 +71,10 @@ publishing {
     }
 }
 
-tasks.withType<Javadoc> {
-    (options as StandardJavadocDocletOptions).doclet("none")
+tasks {
+    named<Javadoc>("javadoc") {
+        enabled = false
+    }
 }
 
 tasks.test {
