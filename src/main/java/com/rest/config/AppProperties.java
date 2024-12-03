@@ -9,14 +9,13 @@ import org.springframework.validation.annotation.Validated;
 public class AppProperties {
 
   private static AppProperties instance;
+  private String version = "NO_VERSION";
 
   @PostConstruct
   public void init() {
 
     instance = this;
   }
-
-  private String version = "NO_VERSION";
 
   public static String restApiVersion() {
 

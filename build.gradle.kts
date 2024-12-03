@@ -71,6 +71,12 @@ publishing {
     }
 }
 
+tasks {
+    named<Javadoc>("javadoc") {
+        enabled = false
+    }
+}
+
 tasks.test {
     useJUnitPlatform()
 }

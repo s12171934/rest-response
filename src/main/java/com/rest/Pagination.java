@@ -15,7 +15,7 @@ public record Pagination(
         (totalItems - 1) / itemsPerPage + 1,
         totalItems,
         itemsPerPage,
-        currentPage < (totalItems - 1) / itemsPerPage + 1
+        currentPage >= (totalItems - 1) / itemsPerPage + 1
     );
   }
 }
