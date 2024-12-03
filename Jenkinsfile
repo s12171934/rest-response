@@ -107,8 +107,9 @@ def waitForJitPackBuild(String tag) {
             url: "${env.JITPACK_API_URL}/${tag}",
             validResponseCodes: '200, 404'
         )
+        echo "JitPack response: ${response}"
 
-        if (response.content.status == 'SUCCESS') {
+        if (response.content.status == 'ok') {
             echo 'JitPack build successful'
             sendSuccessEmail(tag)
             return true
