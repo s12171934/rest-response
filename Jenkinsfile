@@ -49,7 +49,8 @@ pipeline {
             post {
                 success {
                     script {
-                        waitForJitPackBuild()
+                        def tag = sh(script: "git describe --tags --abbrev=0", returnStdout: true).trim()
+                        waitForJitPackBuild(tag)
                     }
                 }
             }
@@ -61,7 +62,7 @@ pipeline {
 def generateNewTag() {
     def latestTag = sh(script: "git describe --tags --abbrev=0 || echo 'v0.0.0'", returnStdout: true).trim()
     def (major, minor, patch) = latestTag.replace('v', '').tokenize('.')
-    return "v${major}.${minor}.${(patch.toInteger() + 1)}"
+    return "${major}.${minor}.${(patch.toInteger() + 1)}"
 }
 
 def configureGit() {
@@ -99,17 +100,17 @@ def createGithubRelease(String newTag) {
     """
 }
 
-def waitForJitPackBuild() {
+def waitForJitPackBuild(String tag) {
     retry(30) {
         sleep(time: 20, unit: 'SECONDS')
         def response = httpRequest(
-            url: "${env.JITPACK_API_URL}/${newTag}",
+            url: "${env.JITPACK_API_URL}/${tag}",
             validResponseCodes: '200, 404'
         )
 
         if (response.content.status == 'SUCCESS') {
             echo 'JitPack build successful'
-            sendSuccessEmail(newTag)
+            sendSuccessEmail(tag)
             return true
         }
         error 'JitPack build failed'
