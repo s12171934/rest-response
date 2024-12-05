@@ -1,3 +1,4 @@
 rest:
   response:
     version: test-version
+    reference-url: https://test.test.com/reference-api
