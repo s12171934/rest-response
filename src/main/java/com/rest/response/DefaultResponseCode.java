@@ -4,7 +4,7 @@ import org.springframework.http.HttpStatus;
 
 import java.util.Arrays;
 
-enum DefaultResponseCode implements RestResponseCode{
+public enum DefaultResponseCode implements RestResponseCode{
   OK(200, "HTTP_STATUS_OK", HttpStatus.OK),
   CREATED(201, "HTTP_STATUS_CREATED", HttpStatus.CREATED),
   ACCEPTED(202, "HTTP_STATUS_ACCEPTED", HttpStatus.ACCEPTED),

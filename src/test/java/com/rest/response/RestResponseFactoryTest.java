@@ -1,6 +1,7 @@
 package com.rest.response;
 
 import com.rest.config.TestConfig;
+import com.rest.resource.TestResponseCode;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
