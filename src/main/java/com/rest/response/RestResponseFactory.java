@@ -1,6 +1,7 @@
 package com.rest.response;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rest.config.AppProperties;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -14,34 +15,66 @@ import java.util.Objects;
 public class RestResponseFactory<T> {
 
   private final RestResponseCode responseCode;
-  private HttpHeaders headers;
-  private RestResponse<T> restResponse;
+  private final HttpHeaders headers;
+  private final RestResponse<T> restResponse;
 
-  private RestResponseFactory(RestResponseCode responseCode, HttpHeaders headers, T result, Pagination pagination) {
+  private RestResponseFactory(RestResponseCode responseCode, HttpHeaders headers, T content, Pagination pagination) {
 
     this.responseCode = responseCode;
-    this.headers = headers;
-    this.restResponse = new RestResponse<>(responseCode, result, pagination);
+    this.headers = setDefaultHeaders(headers);
+    this.restResponse = new RestResponse<>(responseCode, content, pagination);
   }
 
-  private RestResponseFactory(RestResponseCode responseCode, HttpHeaders headers, T result) {
+  private static <T> Builder<T> builder() {
 
-    this.responseCode = responseCode;
-    this.headers = headers;
-    this.restResponse = new RestResponse<>(responseCode, result);
+    return new Builder<>();
   }
 
-  private RestResponseFactory(RestResponseCode responseCode, HttpHeaders headers) {
+  private static class Builder<T> {
 
-    this.responseCode = responseCode;
-    this.headers = headers;
-    this.restResponse = new RestResponse<>(responseCode, null);
+    private RestResponseCode responseCode;
+    private HttpHeaders headers;
+    private T content;
+    private Pagination pagination;
+
+    private Builder() {}
+
+    private Builder<T> responseCode(RestResponseCode responseCode) {
+
+      this.responseCode = responseCode;
+      return this;
+    }
+
+    private Builder<T> headers(HttpHeaders headers) {
+
+      this.headers = headers;
+      return this;
+    }
+
+    private Builder<T> content(T content) {
+
+      this.content = content;
+      return this;
+    }
+
+    private Builder<T> pagination(Pagination pagination) {
+
+      this.pagination = pagination;
+      return this;
+    }
+
+    public RestResponseFactory<T> build() {
+
+      return new RestResponseFactory<>(responseCode, headers, content, pagination);
+    }
   }
 
-  private RestResponseFactory(RestResponseCode responseCode) {
+  private HttpHeaders setDefaultHeaders(HttpHeaders headers) {
 
-    this.responseCode = responseCode;
-    this.restResponse = new RestResponse<>(responseCode, null);
+    if (headers == null) headers = new HttpHeaders();
+    headers.add(HttpHeaders.CONTENT_TYPE, "application/json; charset=utf-8");
+    headers.add(HttpHeaders.LINK,  String.format("<%s>; rel=\"profile\"", AppProperties.restApiReference()));
+    return headers;
   }
 
   private ResponseEntity<RestResponse<T>> createResponseEntity() {
@@ -67,131 +100,443 @@ public class RestResponseFactory<T> {
     printWriter.close();
   }
 
-  public static <E> ResponseEntity<RestResponse<E>> createFullResponseEntity(RestResponseCode restResponse, HttpHeaders responseHeaders, E result) {
-    return new RestResponseFactory<>(restResponse, responseHeaders, result).createResponseEntity();
+  public static <E> ResponseEntity<RestResponse<E>> createFullResponseEntity(
+      RestResponseCode responseCode,
+      HttpHeaders responseHeaders,
+      E content
+  ) {
+
+    return RestResponseFactory.<E>builder()
+        .responseCode(responseCode)
+        .headers(responseHeaders)
+        .content(content)
+        .build()
+        .createResponseEntity();
   }
 
-  public static <E> ResponseEntity<RestResponse<E>> createFullResponseEntity(HttpStatus httpStatus, HttpHeaders responseHeaders, E result) {
-    return createFullResponseEntity(DefaultResponseCode.findCode(httpStatus), responseHeaders, result);
+  public static <E> ResponseEntity<RestResponse<E>> createFullResponseEntity(
+      HttpStatus httpStatus,
+      HttpHeaders responseHeaders,
+      E content
+  ) {
+
+    return createFullResponseEntity(
+        DefaultResponseCode.findCode(httpStatus),
+        responseHeaders,
+        content
+    );
   }
 
-  public static <E> ResponseEntity<RestResponse<E[]>> createFullResponseEntity(RestResponseCode responseCode, HttpHeaders responseHeaders, E[] result, Pagination pagination) {
-    return new RestResponseFactory<>(responseCode, responseHeaders, result, pagination).createResponseEntity();
+  public static <E> ResponseEntity<RestResponse<E[]>> createFullResponseEntity(
+      RestResponseCode responseCode,
+      HttpHeaders responseHeaders,
+      E[] content,
+      Pagination pagination
+  ) {
+
+    return RestResponseFactory.<E[]>builder()
+        .responseCode(responseCode)
+        .headers(responseHeaders)
+        .content(content)
+        .pagination(pagination)
+        .build()
+        .createResponseEntity();
   }
 
-  public static <E> ResponseEntity<RestResponse<E[]>> createFullResponseEntity(HttpStatus httpStatus, HttpHeaders responseHeaders, E[] result, Pagination pagination) {
-    return createFullResponseEntity(DefaultResponseCode.findCode(httpStatus), responseHeaders, result, pagination);
+  public static <E> ResponseEntity<RestResponse<E[]>> createFullResponseEntity(
+      HttpStatus httpStatus,
+      HttpHeaders responseHeaders,
+      E[] content,
+      Pagination pagination
+  ) {
+
+    return createFullResponseEntity(
+        DefaultResponseCode.findCode(httpStatus),
+        responseHeaders,
+        content,
+        pagination
+    );
   }
 
-  public static <E extends Collection<?>> ResponseEntity<RestResponse<E>> createFullResponseEntity(RestResponseCode responseCode, HttpHeaders responseHeaders, E result, Pagination pagination) {
-    return new RestResponseFactory<>(responseCode, responseHeaders, result, pagination).createResponseEntity();
+  public static <E extends Collection<?>> ResponseEntity<RestResponse<E>> createFullResponseEntity(
+      RestResponseCode responseCode,
+      HttpHeaders responseHeaders,
+      E content,
+      Pagination pagination
+  ) {
+
+    return RestResponseFactory.<E>builder()
+        .responseCode(responseCode)
+        .headers(responseHeaders)
+        .content(content)
+        .pagination(pagination)
+        .build()
+        .createResponseEntity();
   }
 
-  public static <E extends Collection<?>> ResponseEntity<RestResponse<E>> createFullResponseEntity(HttpStatus httpStatus, HttpHeaders responseHeaders, E result, Pagination pagination) {
-    return createFullResponseEntity(DefaultResponseCode.findCode(httpStatus), responseHeaders, result, pagination);
+  public static <E extends Collection<?>> ResponseEntity<RestResponse<E>> createFullResponseEntity(
+      HttpStatus httpStatus,
+      HttpHeaders responseHeaders,
+      E content,
+      Pagination pagination
+  ) {
+
+    return createFullResponseEntity(
+        DefaultResponseCode.findCode(httpStatus),
+        responseHeaders,
+        content,
+        pagination
+    );
   }
 
-  public static ResponseEntity<RestResponse<Void>> createBasicResponseEntity(RestResponseCode restResponse) {
-    return new RestResponseFactory<Void>(restResponse).createResponseEntity();
+  public static ResponseEntity<RestResponse<Void>> createBasicResponseEntity(
+      RestResponseCode responseCode
+  ) {
+
+    return RestResponseFactory.<Void>builder()
+        .responseCode(responseCode)
+        .build()
+        .createResponseEntity();
   }
 
-  public static ResponseEntity<RestResponse<Void>> createBasicResponseEntity(HttpStatus httpStatus) {
-    return createBasicResponseEntity(DefaultResponseCode.findCode(httpStatus));
+  public static ResponseEntity<RestResponse<Void>> createBasicResponseEntity(
+      HttpStatus httpStatus
+  ) {
+
+    return createBasicResponseEntity(
+        DefaultResponseCode.findCode(httpStatus)
+    );
   }
 
-  public static <E> ResponseEntity<RestResponse<E>> createResultResponseEntity(RestResponseCode restResponse, E result) {
-    return new RestResponseFactory<>(restResponse, null, result).createResponseEntity();
+  public static <E> ResponseEntity<RestResponse<E>> createContentResponseEntity(
+      RestResponseCode responseCode,
+      E content
+  ) {
+
+    return RestResponseFactory.<E>builder()
+        .responseCode(responseCode)
+        .content(content)
+        .build()
+        .createResponseEntity();
   }
 
-  public static <E> ResponseEntity<RestResponse<E>> createResultResponseEntity(HttpStatus httpStatus, E result) {
-    return createResultResponseEntity(DefaultResponseCode.findCode(httpStatus), result);
+  public static <E> ResponseEntity<RestResponse<E>> createContentResponseEntity(
+      HttpStatus httpStatus,
+      E content
+  ) {
+
+    return createContentResponseEntity(
+        DefaultResponseCode.findCode(httpStatus),
+        content
+    );
   }
 
-  public static <E> ResponseEntity<RestResponse<E[]>> createResultResponseEntity(RestResponseCode responseCode, E[] result, Pagination pagination) {
-    return new RestResponseFactory<>(responseCode, null, result, pagination).createResponseEntity();
+  public static <E> ResponseEntity<RestResponse<E[]>> createContentResponseEntity(
+      RestResponseCode responseCode,
+      E[] content,
+      Pagination pagination
+  ) {
+
+    return RestResponseFactory.<E[]>builder()
+        .responseCode(responseCode)
+        .content(content)
+        .pagination(pagination)
+        .build()
+        .createResponseEntity();
   }
 
-  public static <E> ResponseEntity<RestResponse<E[]>> createResultResponseEntity(HttpStatus httpStatus, E[] result, Pagination pagination) {
-    return createResultResponseEntity(DefaultResponseCode.findCode(httpStatus), result, pagination);
+  public static <E> ResponseEntity<RestResponse<E[]>> createContentResponseEntity(
+      HttpStatus httpStatus,
+      E[] content,
+      Pagination pagination
+  ) {
+
+    return createContentResponseEntity(
+        DefaultResponseCode.findCode(httpStatus),
+        content,
+        pagination
+    );
   }
 
-  public static <E extends Collection<?>> ResponseEntity<RestResponse<E>> createResultResponseEntity(RestResponseCode responseCode, E result, Pagination pagination) {
-    return new RestResponseFactory<>(responseCode, null, result, pagination).createResponseEntity();
+  public static <E extends Collection<?>> ResponseEntity<RestResponse<E>> createContentResponseEntity(
+      RestResponseCode responseCode,
+      E content,
+      Pagination pagination
+  ) {
+
+    return RestResponseFactory.<E>builder()
+        .responseCode(responseCode)
+        .content(content)
+        .pagination(pagination)
+        .build()
+        .createResponseEntity();
   }
 
-  public static <E extends Collection<?>> ResponseEntity<RestResponse<E>> createResultResponseEntity(HttpStatus httpStatus, E result, Pagination pagination) {
-    return createResultResponseEntity(DefaultResponseCode.findCode(httpStatus), result, pagination);
+  public static <E extends Collection<?>> ResponseEntity<RestResponse<E>> createContentResponseEntity(
+      HttpStatus httpStatus,
+      E content,
+      Pagination pagination
+  ) {
+
+    return createContentResponseEntity(
+        DefaultResponseCode.findCode(httpStatus),
+        content,
+        pagination
+    );
   }
 
-  public static ResponseEntity<RestResponse<Void>> createHeaderResponseEntity(RestResponseCode restResponse, HttpHeaders responseHeaders) {
-    return new RestResponseFactory<Void>(restResponse, responseHeaders).createResponseEntity();
+  public static ResponseEntity<RestResponse<Void>> createHeaderResponseEntity(
+      RestResponseCode responseCode,
+      HttpHeaders responseHeaders
+  ) {
+
+    return RestResponseFactory.<Void>builder()
+        .responseCode(responseCode)
+        .headers(responseHeaders)
+        .build()
+        .createResponseEntity();
   }
 
-  public static ResponseEntity<RestResponse<Void>> createHeaderResponseEntity(HttpStatus httpStatus, HttpHeaders responseHeaders) {
-    return createHeaderResponseEntity(DefaultResponseCode.findCode(httpStatus), responseHeaders);
+  public static ResponseEntity<RestResponse<Void>> createHeaderResponseEntity(
+      HttpStatus httpStatus,
+      HttpHeaders responseHeaders
+  ) {
+
+    return createHeaderResponseEntity(
+        DefaultResponseCode.findCode(httpStatus),
+        responseHeaders
+    );
   }
 
-  public static <E> void setFullResponse(HttpServletResponse response, RestResponseCode restResponse, HttpHeaders responseHeaders, E result) throws IOException {
-    new RestResponseFactory<>(restResponse, responseHeaders, result).setResponse(response);
+  public static <E> void setFullResponse(
+      HttpServletResponse response,
+      RestResponseCode responseCode,
+      HttpHeaders responseHeaders,
+      E content
+  ) throws IOException {
+
+    RestResponseFactory.<E>builder()
+        .responseCode(responseCode)
+        .headers(responseHeaders)
+        .content(content)
+        .build()
+        .setResponse(response);
   }
 
-  public static <E> void setFullResponse(HttpServletResponse response, HttpStatus httpStatus, HttpHeaders responseHeaders, E result) throws IOException {
-    setFullResponse(response, DefaultResponseCode.findCode(httpStatus), responseHeaders, result);
+  public static <E> void setFullResponse(
+      HttpServletResponse response,
+      HttpStatus httpStatus,
+      HttpHeaders responseHeaders,
+      E content
+  ) throws IOException {
+
+    setFullResponse(
+        response,
+        DefaultResponseCode.findCode(httpStatus),
+        responseHeaders,
+        content
+    );
   }
 
-  public static <E> void setFullResponse(HttpServletResponse response, RestResponseCode responseCode, HttpHeaders responseHeaders, E[] result, Pagination pagination) throws IOException {
-    new RestResponseFactory<>(responseCode, responseHeaders, result, pagination).setResponse(response);
+  public static <E> void setFullResponse(
+      HttpServletResponse response,
+      RestResponseCode responseCode,
+      HttpHeaders responseHeaders,
+      E[] content,
+      Pagination pagination
+  ) throws IOException {
+
+    RestResponseFactory.<E[]>builder()
+        .responseCode(responseCode)
+        .headers(responseHeaders)
+        .content(content)
+        .pagination(pagination)
+        .build()
+        .setResponse(response);
   }
 
-  public static <E> void setFullResponse(HttpServletResponse response, HttpStatus httpStatus, HttpHeaders responseHeaders, E[] result, Pagination pagination) throws IOException {
-    setFullResponse(response, DefaultResponseCode.findCode(httpStatus), responseHeaders, result, pagination);
+  public static <E> void setFullResponse(
+      HttpServletResponse response,
+      HttpStatus httpStatus,
+      HttpHeaders responseHeaders,
+      E[] content,
+      Pagination pagination
+  ) throws IOException {
+
+    setFullResponse(
+        response,
+        DefaultResponseCode.findCode(httpStatus),
+        responseHeaders,
+        content,
+        pagination
+    );
   }
 
-  public static <E extends Collection<?>> void setFullResponse(HttpServletResponse response, RestResponseCode responseCode, HttpHeaders responseHeaders, E result, Pagination pagination) throws IOException {
-    new RestResponseFactory<>(responseCode, responseHeaders, result, pagination).setResponse(response);
+  public static <E extends Collection<?>> void setFullResponse(
+      HttpServletResponse response,
+      RestResponseCode responseCode,
+      HttpHeaders responseHeaders,
+      E content,
+      Pagination pagination
+  ) throws IOException {
+
+    RestResponseFactory.<E>builder()
+        .responseCode(responseCode)
+        .headers(responseHeaders)
+        .content(content)
+        .pagination(pagination)
+        .build()
+        .setResponse(response);
   }
 
-  public static <E extends Collection<?>> void setFullResponse(HttpServletResponse response, HttpStatus httpStatus, HttpHeaders responseHeaders, E result, Pagination pagination) throws IOException {
-    setFullResponse(response, DefaultResponseCode.findCode(httpStatus), responseHeaders, result, pagination);
+  public static <E extends Collection<?>> void setFullResponse(
+      HttpServletResponse response,
+      HttpStatus httpStatus,
+      HttpHeaders responseHeaders,
+      E content,
+      Pagination pagination
+  ) throws IOException {
+
+    setFullResponse(
+        response,
+        DefaultResponseCode.findCode(httpStatus),
+        responseHeaders,
+        content,
+        pagination
+    );
   }
 
-  public static void setBasicResponse(HttpServletResponse response, RestResponseCode restResponse) throws IOException {
-    new RestResponseFactory<>(restResponse).setResponse(response);
+  public static void setBasicResponse(
+      HttpServletResponse response,
+      RestResponseCode responseCode
+  ) throws IOException {
+
+    RestResponseFactory.<Void>builder()
+        .responseCode(responseCode)
+        .build()
+        .setResponse(response);
   }
 
-  public static void setBasicResponse(HttpServletResponse response, HttpStatus httpStatus) throws IOException {
-    setBasicResponse(response, DefaultResponseCode.findCode(httpStatus));
+  public static void setBasicResponse(
+      HttpServletResponse response,
+      HttpStatus httpStatus
+  ) throws IOException {
+
+    setBasicResponse(
+        response,
+        DefaultResponseCode.findCode(httpStatus)
+    );
   }
 
-  public static <E> void setResultResponse(HttpServletResponse response, RestResponseCode restResponse, E result) throws IOException {
-    new RestResponseFactory<>(restResponse, null, result).setResponse(response);
+  public static <E> void setContentResponse(
+      HttpServletResponse response,
+      RestResponseCode responseCode,
+      E content
+  ) throws IOException {
+
+    RestResponseFactory.<E>builder()
+        .responseCode(responseCode)
+        .content(content)
+        .build()
+        .setResponse(response);
   }
 
-  public static <E> void setResultResponse(HttpServletResponse response, HttpStatus httpStatus, E result) throws IOException {
-    setResultResponse(response, DefaultResponseCode.findCode(httpStatus), result);
+  public static <E> void setContentResponse(
+      HttpServletResponse response,
+      HttpStatus httpStatus,
+      E content
+  ) throws IOException {
+
+    setContentResponse(
+        response,
+        DefaultResponseCode.findCode(httpStatus),
+        content
+    );
   }
 
-  public static <E> void setResultResponse(HttpServletResponse response, RestResponseCode responseCode, E[] result, Pagination pagination) throws IOException {
-    new RestResponseFactory<>(responseCode, null, result, pagination).setResponse(response);
+  public static <E> void setContentResponse(
+      HttpServletResponse response,
+      RestResponseCode responseCode,
+      E[] content,
+      Pagination pagination
+  ) throws IOException {
+
+    RestResponseFactory.<E[]>builder()
+        .responseCode(responseCode)
+        .content(content)
+        .pagination(pagination)
+        .build()
+        .setResponse(response);
   }
 
-  public static <E> void setResultResponse(HttpServletResponse response, HttpStatus httpStatus, E[] result, Pagination pagination) throws IOException {
-    setResultResponse(response, DefaultResponseCode.findCode(httpStatus), result, pagination);
+  public static <E> void setContentResponse(
+      HttpServletResponse response,
+      HttpStatus httpStatus,
+      E[] content,
+      Pagination pagination
+  ) throws IOException {
+
+    setContentResponse(
+        response,
+        DefaultResponseCode.findCode(httpStatus),
+        content,
+        pagination
+    );
   }
 
-  public static <E extends Collection<?>> void setResultResponse(HttpServletResponse response, RestResponseCode responseCode, E result, Pagination pagination) throws IOException {
-    new RestResponseFactory<>(responseCode, null, result, pagination).setResponse(response);
+  public static <E extends Collection<?>> void setContentResponse(
+      HttpServletResponse response,
+      RestResponseCode responseCode,
+      E content,
+      Pagination pagination
+  ) throws IOException {
+
+    RestResponseFactory.<E>builder()
+        .responseCode(responseCode)
+        .content(content)
+        .pagination(pagination)
+        .build()
+        .setResponse(response);
   }
 
-  public static <E extends Collection<?>> void setResultResponse(HttpServletResponse response, HttpStatus httpStatus, E result, Pagination pagination) throws IOException {
-    setResultResponse(response, DefaultResponseCode.findCode(httpStatus), result, pagination);
+  public static <E extends Collection<?>> void setContentResponse(
+      HttpServletResponse response,
+      HttpStatus httpStatus,
+      E content,
+      Pagination pagination
+  ) throws IOException {
+
+    setContentResponse(
+        response,
+        DefaultResponseCode.findCode(httpStatus),
+        content,
+        pagination
+    );
   }
 
-  public static void setHeaderResponse(HttpServletResponse response, RestResponseCode restResponse, HttpHeaders responseHeaders) throws IOException {
-    new RestResponseFactory<>(restResponse, responseHeaders).setResponse(response);
+  public static void setHeaderResponse(
+      HttpServletResponse response,
+      RestResponseCode responseCode,
+      HttpHeaders responseHeaders
+  ) throws IOException {
+
+    RestResponseFactory.<Void>builder()
+        .responseCode(responseCode)
+        .headers(responseHeaders)
+        .build()
+        .setResponse(response);
   }
 
-  public static void setHeaderResponse(HttpServletResponse response, HttpStatus httpStatus, HttpHeaders responseHeaders) throws IOException {
-    setHeaderResponse(response, DefaultResponseCode.findCode(httpStatus), responseHeaders);
+  public static void setHeaderResponse(
+      HttpServletResponse response,
+      HttpStatus httpStatus,
+      HttpHeaders responseHeaders
+  ) throws IOException {
+
+    setHeaderResponse(
+        response,
+        DefaultResponseCode.findCode(httpStatus),
+        responseHeaders
+    );
   }
 }

@@ -11,8 +11,15 @@
       "name": "rest.response.version",
       "type": "java.lang.String",
       "description": "REST API 버전",
-      "sourceType": "com.example.config.AppProperties",
+      "sourceType": "com.rest.config.AppProperties",
       "defaultValue": "NO_VERSION"
+    },
+    {
+      "name": "rest.response.reference-url",
+      "type": "java.lang.String",
+      "description": "REST API 명세서 링크",
+      "sourceType": "com.rest.config.AppProperties",
+      "defaultValue": "NO_REFERENCE"
     }
   ],
   "hints": []

@@ -8,6 +8,7 @@ public class AppProperties {
 
   private static AppProperties instance;
   private String version = "NO_VERSION";
+  private String referenceUrl = "NO_REFERENCE";
 
   @PostConstruct
   public void init() {
@@ -20,6 +21,11 @@ public class AppProperties {
     return instance.version;
   }
 
+  public static String restApiReference() {
+
+    return instance.referenceUrl;
+  }
+
   public String getVersion() {
 
     return this.version;
@@ -28,5 +34,15 @@ public class AppProperties {
   public void setVersion(String version) {
 
     this.version = version;
+  }
+
+  public String getReferenceUrl() {
+
+    return this.referenceUrl;
+  }
+
+  public void setReferenceUrl(String referenceUrl) {
+
+    this.referenceUrl = referenceUrl;
   }
 }

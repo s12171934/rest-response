@@ -1,13 +1,10 @@
-package com.rest;
+package com.rest.response;
 
-import com.rest.code.TestResponseCode;
 import com.rest.config.TestConfig;
-import com.rest.response.Pagination;
-import com.rest.response.RestResponse;
-import com.rest.response.RestResponseFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -27,6 +24,12 @@ import static org.junit.jupiter.api.Assertions.*;
     properties = "spring.config.name=application-test"
 )
 public class RestResponseFactoryTest {
+
+  @Value("${rest.response.reference-url}")
+  private String referenceUrl;
+
+  @Value("${rest.response.version}")
+  private String version;
 
   private MockHttpServletResponse response;
   private HttpHeaders testHeaders;
@@ -60,17 +63,19 @@ public class RestResponseFactoryTest {
     String testData = "test-data";
 
     // When
-    ResponseEntity<RestResponse<String>> result = RestResponseFactory.createFullResponseEntity(
+    ResponseEntity<RestResponse<String>> content = RestResponseFactory.createFullResponseEntity(
         HttpStatus.OK,
         testHeaders,
         testData
     );
 
     // Then
-    assertNotNull(result);
-    assertEquals(HttpStatus.OK, result.getStatusCode());
-    assertEquals("test-value", result.getHeaders().getFirst("Custom-Header"));
-    assertEquals(testData, result.getBody().result());
+    assertNotNull(content);
+    assertEquals(HttpStatus.OK, content.getStatusCode());
+    assertEquals("test-value", content.getHeaders().getFirst("Custom-Header"));
+    assertEquals(String.format("<%s>; rel=\"profile\"",referenceUrl), content.getHeaders().getFirst(HttpHeaders.LINK));
+    assertEquals(version, content.getBody().metaData().version());
+    assertEquals(testData, content.getBody().content());
   }
 
   @Test
@@ -79,7 +84,7 @@ public class RestResponseFactoryTest {
     List<String> testData = List.of("test1", "test2");
 
     // When
-    ResponseEntity<RestResponse<List<String>>> result = RestResponseFactory.createFullResponseEntity(
+    ResponseEntity<RestResponse<List<String>>> content = RestResponseFactory.createFullResponseEntity(
         HttpStatus.OK,
         testHeaders,
         testData,
@@ -87,13 +92,13 @@ public class RestResponseFactoryTest {
     );
 
     // Then
-    assertNotNull(result);
-    assertEquals(HttpStatus.OK, result.getStatusCode());
-    assertEquals(testData, result.getBody().result());
-    assertNotNull(result.getBody().metaData().pagination());
-    assertEquals(1, result.getBody().metaData().pagination().currentPage());
-    assertEquals(10, result.getBody().metaData().pagination().totalPages());
-    assertEquals(100, result.getBody().metaData().pagination().totalItems());
+    assertNotNull(content);
+    assertEquals(HttpStatus.OK, content.getStatusCode());
+    assertEquals(testData, content.getBody().content());
+    assertNotNull(content.getBody().metaData().pagination());
+    assertEquals(1, content.getBody().metaData().pagination().currentPage());
+    assertEquals(10, content.getBody().metaData().pagination().totalPages());
+    assertEquals(100, content.getBody().metaData().pagination().totalItems());
   }
 
   @Test
@@ -102,7 +107,7 @@ public class RestResponseFactoryTest {
     String[] testData = {"test1", "test2", "test3"};
 
     // When
-    ResponseEntity<RestResponse<String[]>> result = RestResponseFactory.createFullResponseEntity(
+    ResponseEntity<RestResponse<String[]>> content = RestResponseFactory.createFullResponseEntity(
         HttpStatus.OK,
         testHeaders,
         testData,
@@ -110,55 +115,55 @@ public class RestResponseFactoryTest {
     );
 
     // Then
-    assertNotNull(result);
-    assertEquals(HttpStatus.OK, result.getStatusCode());
-    assertEquals(testData, result.getBody().result());
-    assertNotNull(result.getBody().metaData().pagination());
-    assertEquals(1, result.getBody().metaData().pagination().currentPage());
-    assertEquals(10, result.getBody().metaData().pagination().totalPages());
-    assertEquals(100, result.getBody().metaData().pagination().totalItems());
+    assertNotNull(content);
+    assertEquals(HttpStatus.OK, content.getStatusCode());
+    assertEquals(testData, content.getBody().content());
+    assertNotNull(content.getBody().metaData().pagination());
+    assertEquals(1, content.getBody().metaData().pagination().currentPage());
+    assertEquals(10, content.getBody().metaData().pagination().totalPages());
+    assertEquals(100, content.getBody().metaData().pagination().totalItems());
   }
 
   @Test
   void createBasicResponseEntityTest() {
     // When
-    ResponseEntity<RestResponse<Void>> result = RestResponseFactory.createBasicResponseEntity(HttpStatus.OK);
+    ResponseEntity<RestResponse<Void>> content = RestResponseFactory.createBasicResponseEntity(HttpStatus.OK);
 
     // Then
-    assertNotNull(result);
-    assertEquals(HttpStatus.OK, result.getStatusCode());
-    assertNull(result.getBody().result());
+    assertNotNull(content);
+    assertEquals(HttpStatus.OK, content.getStatusCode());
+    assertNull(content.getBody().content());
   }
 
   @Test
-  void createResultResponseEntityTest() {
+  void createContentResponseEntityTest() {
     // Given
     String testData = "test-data";
 
     // When
-    ResponseEntity<RestResponse<String>> result = RestResponseFactory.createResultResponseEntity(
+    ResponseEntity<RestResponse<String>> content = RestResponseFactory.createContentResponseEntity(
         HttpStatus.OK,
         testData
     );
 
     // Then
-    assertNotNull(result);
-    assertEquals(HttpStatus.OK, result.getStatusCode());
-    assertEquals(testData, result.getBody().result());
+    assertNotNull(content);
+    assertEquals(HttpStatus.OK, content.getStatusCode());
+    assertEquals(testData, content.getBody().content());
   }
 
   @Test
   void createHeadersResponseEntityTest() {
     // When
-    ResponseEntity<RestResponse<Void>> result = RestResponseFactory.createHeaderResponseEntity(
+    ResponseEntity<RestResponse<Void>> content = RestResponseFactory.createHeaderResponseEntity(
         HttpStatus.OK,
         testHeaders
     );
 
     // Then
-    assertNotNull(result);
-    assertEquals(HttpStatus.OK, result.getStatusCode());
-    assertEquals("test-value", result.getHeaders().getFirst("Custom-Header"));
+    assertNotNull(content);
+    assertEquals(HttpStatus.OK, content.getStatusCode());
+    assertEquals("test-value", content.getHeaders().getFirst("Custom-Header"));
   }
 
   @Test
@@ -167,19 +172,19 @@ public class RestResponseFactoryTest {
     String testData = "test-data";
 
     //When
-    ResponseEntity<RestResponse<String>> result = RestResponseFactory.createFullResponseEntity(
+    ResponseEntity<RestResponse<String>> content = RestResponseFactory.createFullResponseEntity(
         TestResponseCode.TEST_RESPONSE_CODE,
         testHeaders,
         testData
     );
 
     //Then
-    assertNotNull(result);
-    assertEquals(HttpStatus.OK, result.getStatusCode());
-    assertEquals(20000, result.getBody().status().code());
-    assertEquals("TEST_RESPONSE_CODE", result.getBody().status().message());
-    assertEquals("test-value", result.getHeaders().getFirst("Custom-Header"));
-    assertEquals(testData, result.getBody().result());
+    assertNotNull(content);
+    assertEquals(HttpStatus.OK, content.getStatusCode());
+    assertEquals(20000, content.getBody().status().code());
+    assertEquals("TEST_RESPONSE_CODE", content.getBody().status().message());
+    assertEquals("test-value", content.getHeaders().getFirst("Custom-Header"));
+    assertEquals(testData, content.getBody().content());
   }
 
   @Test

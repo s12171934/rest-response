@@ -1,8 +1,5 @@
-package com.rest.controller;
+package com.rest.response;
 
-import com.rest.response.RestResponse;
-import com.rest.response.RestResponseFactory;
-import com.rest.service.TestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,19 +9,19 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-public class TestController {
+public class ResponseTestController {
 
-  private final TestService testService;
+  private final ResponseTestService responseTestService;
 
   @Autowired
-  public TestController(TestService testService) {
+  public ResponseTestController(ResponseTestService responseTestService) {
 
-    this.testService = testService;
+    this.responseTestService = responseTestService;
   }
 
   @GetMapping("/api/test")
   public ResponseEntity<RestResponse<List<String>>> getData() {
 
-    return RestResponseFactory.createResultResponseEntity(HttpStatus.OK, testService.getTest());
+    return RestResponseFactory.createContentResponseEntity(HttpStatus.OK, responseTestService.getTest());
   }
 }

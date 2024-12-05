@@ -11,34 +11,18 @@ import java.time.format.DateTimeFormatter;
 public record RestResponse<T>(
     Boolean success,
     Status status,
-    T result,
+    T content,
     MetaData metaData
 ) {
 
-  public RestResponse(RestResponseCode responseCode, T result) {
+  public RestResponse(RestResponseCode responseCode, T content, Pagination pagination) {
     this(
         responseCode.getHttpStatus().is2xxSuccessful(),
         new Status(
             responseCode.getCode(),
             responseCode.getMessage()
         ),
-        result,
-        new MetaData(
-            LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME),
-            ServletUriComponentsBuilder.fromCurrentRequestUri().toUriString(),
-            AppProperties.restApiVersion()
-        )
-    );
-  }
-
-  public RestResponse(RestResponseCode responseCode, T result, Pagination pagination) {
-    this(
-        responseCode.getHttpStatus().is2xxSuccessful(),
-        new Status(
-            responseCode.getCode(),
-            responseCode.getMessage()
-        ),
-        result,
+        content,
         new MetaData(
             LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME),
             ServletUriComponentsBuilder.fromCurrentRequestUri().toUriString(),
