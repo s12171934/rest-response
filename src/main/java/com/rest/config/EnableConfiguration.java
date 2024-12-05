@@ -1,9 +1,21 @@
 package com.rest.config;
 
+import com.rest.exception.BaseControllerAdvice;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 
 @AutoConfiguration
-@EnableConfigurationProperties(AppProperties.class)
 public class EnableConfiguration {
+
+  @Bean
+  public AppProperties appProperties() {
+
+    return new AppProperties();
+  }
+
+  @Bean
+  public BaseControllerAdvice baseControllerAdvice() {
+
+    return new BaseControllerAdvice();
+  }
 }
