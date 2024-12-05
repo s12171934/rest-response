@@ -1,6 +1,6 @@
 package com.rest.code;
 
-import com.rest.RestResponseCode;
+import com.rest.response.RestResponseCode;
 import org.springframework.http.HttpStatus;
 
 public enum TestResponseCode implements RestResponseCode {

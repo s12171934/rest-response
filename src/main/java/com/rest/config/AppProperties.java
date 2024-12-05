@@ -2,10 +2,8 @@ package com.rest.config;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.validation.annotation.Validated;
 
 @ConfigurationProperties(prefix = "rest.response")
-@Validated
 public class AppProperties {
 
   private static AppProperties instance;

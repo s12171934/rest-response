@@ -1,4 +1,4 @@
-package com.rest;
+package com.rest.response;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;

@@ -1,4 +1,4 @@
-package com.rest;
+package com.rest.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rest.config.AppProperties;

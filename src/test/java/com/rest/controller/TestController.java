@@ -1,7 +1,7 @@
 package com.rest.controller;
 
-import com.rest.RestResponse;
-import com.rest.RestResponseFactory;
+import com.rest.response.RestResponse;
+import com.rest.response.RestResponseFactory;
 import com.rest.service.TestService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

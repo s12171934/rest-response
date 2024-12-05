@@ -1,8 +1,10 @@
 package com.rest;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rest.code.TestResponseCode;
 import com.rest.config.TestConfig;
+import com.rest.response.Pagination;
+import com.rest.response.RestResponse;
+import com.rest.response.RestResponseFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

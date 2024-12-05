@@ -1,4 +1,4 @@
-package com.rest;
+package com.rest.response;
 
 public record Pagination(
     int currentPage,
